@@ -19,6 +19,7 @@ let message = ref(new Message())
 let isProgressHidden = ref(true)
 let accountId = ref(0)
 let accountType = ref("")
+let activeTabIndex = ref(0)
 
 
 
@@ -31,6 +32,7 @@ function getCookies() {
     } else {
         accountId.value = +id
         accountType.value = type
+        fetchData()
     }
 }
 
@@ -79,7 +81,7 @@ async function loadCustomerAllBooking(accountId: number) {
 
     let currentDateTime = new Date().getTime()
     if (booking.isSuccess == true) {
-        
+
         for (let index = 0; index < booking.data.length; index++) {
             let task = booking.data[index]
             let startTime = task.pick_time
@@ -100,15 +102,17 @@ async function loadCustomerAllBooking(accountId: number) {
 
 
 
-
-fetchData()
-
 function fetchData() {
     if (accountId.value == 0) return
     // fetch data
     console.log("fetching...")
-    loadCustomerAllBooking(accountId.value)
+    if (activeTabIndex.value == 0) {
+        loadCustomerAllBooking(accountId.value)
 
+    } else if (activeTabIndex.value == 1) {
+        // Todo do something
+    }
+    
 }
 
 
@@ -147,6 +151,12 @@ function unixMillisecondsToDateString(unixMilliseconds: number) {
 }
 
 
+function changeTab(index: number) {
+    activeTabIndex.value = index
+    fetchData()
+}
+
+
 
 </script>
 <template>
@@ -159,105 +169,134 @@ function unixMillisecondsToDateString(unixMilliseconds: number) {
             <button class="btn btn-danger" type="submit" @click="logout">Log out</button>
         </div>
     </nav>
-    <div class="row">
-        <div class="col-sm-6 cus-left">
-            <form>
-                <div class="mb-3">
-                    <label for="pickTime" class="form-label">Enter Pick Time</label>
-                    <input type="datetime-local" class="form-control" id="pickTime" placeholder="Pickup time">
-                </div>
-                <div class="mb-3">
-                    <label for="dropTime" class="form-label">Enter Drop Time</label>
-                    <input type="datetime-local" class="form-control" id="dropTime" placeholder="Drop time">
-                </div>
 
-                <div class="mb-3" style="margin-top: 40px;">
-                    <label for="startLocation" class="form-label">Enter Pickup Location</label>
-                    <input type="Text" class="form-control" id="pickLocation" placeholder="India, Bihar, Patna">
-                </div>
-                <div class="mb-3">
-                    <label for="dropLocation" class="form-label">Enter Drop Location</label>
-                    <input type="Text" class="form-control" id="dropLocation" placeholder="India, Bihar, Hajipur">
-                </div>
+    <div class="container">
+        <ul class="nav nav-pills mb-3" id="pills-tab">
+            <li class="nav-item">
+                <button class="nav-link" :class="{ active: activeTabIndex == 0 }" @click="changeTab(0)">Cab Status</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" :class="{ active: activeTabIndex == 1 }" @click="changeTab(1)">Register Cab</button>
+            </li>
+        </ul>
+    </div>
+    <div class="tab-content" id="pills-tabContent">
 
-                <label for="cars">Choose a vehicle:</label>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected value="0">Bike</option>
-                    <option value="1">Micro</option>
-                    <option value="2">Alto</option>
-                    <option value="3">Prime suv</option>
-                </select>
+        <!-- Cab history -->
+        <div class="tab-pane fade" :class="{ show: activeTabIndex == 0, active: activeTabIndex == 0 }">
+            <div class="cab-history">
+                <h3>Cab Status</h3>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Booking ID</th>
+                                <th scope="col">Driver ID</th>
+                                <th scope="col">Pick Time</th>
+                                <th scope="col">Drop Time</th>
+                                <th scope="col">Pick Loc</th>
+                                <th scope="col">Drop Loc</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="blank_row">
+                                <th colspan="7">Active</th>
+                            </tr>
+                            <tr class="table-active" v-for="task, index in customerAllBooking.activeBook">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>{{ task.book_id }}</td>
+                                <td>{{ task.driver_id }}</td>
+                                <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
+                                <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
+                                <td>{{ task.drop_loc }}</td>
+                                <td>{{ task.pick_loc }}</td>
+                            </tr>
 
-                <button type="submit" class="btn btn-primary">Find Cab</button>
-            </form>
+                            <tr class="blank_row">
+                                <th colspan="7">Registered Task</th>
+                            </tr>
+                            <tr v-for="task, index in customerAllBooking.registeredBook">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>{{ task.book_id }}</td>
+                                <td>{{ task.driver_id }}</td>
+                                <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
+                                <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
+                                <td>{{ task.drop_loc }}</td>
+                                <td>{{ task.pick_loc }}</td>
+                            </tr>
+
+                            <tr class="blank_row">
+                                <th colspan="7">History</th>
+                            </tr>
+                            <tr v-for="task, index in customerAllBooking.historyBook">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>{{ task.book_id }}</td>
+                                <td>{{ task.driver_id }}</td>
+                                <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
+                                <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
+                                <td>{{ task.drop_loc }}</td>
+                                <td>{{ task.pick_loc }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
-        <div class="col-sm-6 cus-right">Right</div>
+
+        <!-- Register cab -->
+        <div class="tab-pane fade" :class="{ show: activeTabIndex == 1, active: activeTabIndex == 1 }">
+            <div class="row">
+                <div class="col-sm-6 cus-left">
+                    <form>
+                        <div class="mb-3">
+                            <label for="pickTime" class="form-label">Enter Pick Time</label>
+                            <input type="datetime-local" class="form-control" id="pickTime" placeholder="Pickup time">
+                        </div>
+                        <div class="mb-3">
+                            <label for="dropTime" class="form-label">Enter Drop Time</label>
+                            <input type="datetime-local" class="form-control" id="dropTime" placeholder="Drop time">
+                        </div>
+
+                        <div class="mb-3" style="margin-top: 40px;">
+                            <label for="startLocation" class="form-label">Enter Pickup Location</label>
+                            <input type="Text" class="form-control" id="pickLocation" placeholder="India, Bihar, Patna">
+                        </div>
+                        <div class="mb-3">
+                            <label for="dropLocation" class="form-label">Enter Drop Location</label>
+                            <input type="Text" class="form-control" id="dropLocation" placeholder="India, Bihar, Hajipur">
+                        </div>
+
+                        <label for="cars">Choose a vehicle:</label>
+                        <select class="form-select" aria-label="Default select example">
+                            <option selected value="0">Bike</option>
+                            <option value="1">Micro</option>
+                            <option value="2">Alto</option>
+                            <option value="3">Prime suv</option>
+                        </select>
+
+                        <button type="submit" class="btn btn-primary">Find Cab</button>
+                    </form>
+                </div>
+                <div class="col-sm-6 cus-right">Right</div>
+            </div>
+        </div>
+
+
     </div>
 
-    <div class="cab-history">
-        <h3>Cab Status</h3>
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Booking ID</th>
-                        <th scope="col">Driver ID</th>
-                        <th scope="col">Pick Time</th>
-                        <th scope="col">Drop Time</th>
-                        <th scope="col">Pick Loc</th>
-                        <th scope="col">Drop Loc</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="blank_row">
-                        <th colspan="7">Active</th>
-                    </tr>
-                    <tr class="table-active" v-for="task, index in customerAllBooking.activeBook">
-                        <th scope="row">{{ index + 1 }}</th>
-                        <td>{{ task.book_id }}</td>
-                        <td>{{ task.driver_id }}</td>
-                        <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
-                        <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
-                        <td>{{ task.drop_loc }}</td>
-                        <td>{{ task.pick_loc }}</td>
-                    </tr>
 
-                    <tr class="blank_row">
-                        <th colspan="7">Registered Task</th>
-                    </tr>
-                    <tr v-for="task, index in customerAllBooking.registeredBook">
-                        <th scope="row">{{ index + 1 }}</th>
-                        <td>{{ task.book_id }}</td>
-                        <td>{{ task.driver_id }}</td>
-                        <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
-                        <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
-                        <td>{{ task.drop_loc }}</td>
-                        <td>{{ task.pick_loc }}</td>
-                    </tr>
-
-                    <tr class="blank_row">
-                        <th colspan="7">History</th>
-                    </tr>
-                    <tr v-for="task, index in customerAllBooking.historyBook">
-                        <th scope="row">{{ index + 1 }}</th>
-                        <td>{{ task.book_id }}</td>
-                        <td>{{ task.driver_id }}</td>
-                        <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
-                        <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
-                        <td>{{ task.drop_loc }}</td>
-                        <td>{{ task.pick_loc }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
 
     <ProfileDialogVue :profile="profile" />
     <MessageDialog :message="message" />
     <ProgressDialog v-if="!isProgressHidden" />
 </template>
 <style scoped>
+
+#pills-tab {
+    margin-top: 30px;
+}
 .row {
     width: 100%;
     justify-content: center;

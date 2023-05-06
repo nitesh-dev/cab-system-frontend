@@ -9,16 +9,18 @@ namespace Api {
         }
 
         let path = `sign-in`
-
-        let res = await fetchData(path, data)
-        if (res.status == 200) {
-            let json = await res.json()
-            return { isSuccess: true, accountId: json.accountId, accountType: json.accountType }
-        } else {
-            let message = await res.json()
-            return { isSuccess: false, error: message.error }
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let json = await res.json()
+                return { isSuccess: true, accountId: json.accountId, accountType: json.accountType }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
         }
-
     }
 
     export async function signUp(name: string, number: string, email: string, password: string, accountType: string) {
@@ -30,17 +32,20 @@ namespace Api {
             password: password,
             accountType: accountType
         }
-
         let path = `sign-up`
-
-        let res = await fetchData(path, data)
-        if (res.status == 201) {
-            let json = await res.json()
-            return { isSuccess: true, accountId: json.accountId, accountType: json.accountType }
-        } else {
-            let message = await res.json()
-            return { isSuccess: false, error: message.error }
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 201) {
+                let json = await res.json()
+                return { isSuccess: true, accountId: json.accountId, accountType: json.accountType }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
         }
+
     }
 
 
@@ -51,14 +56,17 @@ namespace Api {
         }
 
         let path = `account-detail`
-
-        let res = await fetchData(path, data)
-        if (res.status == 200) {
-            let json = await res.json()
-            return { isSuccess: true, data: json }
-        } else {
-            let message = await res.json()
-            return { isSuccess: false, error: message.error }
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let json = await res.json()
+                return { isSuccess: true, data: json }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
         }
     }
 
@@ -68,42 +76,54 @@ namespace Api {
             accountId: accountId
         }
         let path = `all-customers`
-        let res = await fetchData(path, data)
-        if (res.status == 200) {
-            let json = await res.json()
-            return { isSuccess: true, data: json }
-        } else {
-            let message = await res.json()
-            return { isSuccess: false, error: message.error }
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let json = await res.json()
+                return { isSuccess: true, data: json }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
         }
     }
 
-    
+
     export async function getAllDriverAccounts(accountId: number) {
         let data = {
             accountId: accountId
         }
         let path = `all-drivers`
-        let res = await fetchData(path, data)
-        if (res.status == 200) {
-            let json = await res.json()
-            return { isSuccess: true, data: json }
-        } else {
-            let message = await res.json()
-            return { isSuccess: false, error: message.error }
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let json = await res.json()
+                return { isSuccess: true, data: json }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
         }
     }
 
     export async function getAllPlans() {
         let data = {}
         let path = `all-plans`
-        let res = await fetchData(path, data)
-        if (res.status == 200) {
-            let json = await res.json()
-            return { isSuccess: true, data: json }
-        } else {
-            let message = await res.json()
-            return { isSuccess: false, error: message.error }
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let json = await res.json()
+                return { isSuccess: true, data: json }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
         }
     }
 
@@ -113,29 +133,37 @@ namespace Api {
             accountId: accountId
         }
         let path = `all-booking`
-        let res = await fetchData(path, data)
-        if (res.status == 200) {
-            let json = await res.json()
-            return { isSuccess: true, data: json }
-        } else {
-            let message = await res.json()
-            return { isSuccess: false, error: message.error }
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let json = await res.json()
+                return { isSuccess: true, data: json }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
         }
     }
 
-    // driver-all-task
+
     export async function getDriverAllTaskList(accountId: number) {
         let data = {
             accountId: accountId
         }
         let path = `driver-all-task`
-        let res = await fetchData(path, data)
-        if (res.status == 200) {
-            let json = await res.json()
-            return { isSuccess: true, data: json }
-        } else {
-            let message = await res.json()
-            return { isSuccess: false, error: message.error }
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let json = await res.json()
+                return { isSuccess: true, data: json }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
         }
     }
 
@@ -149,29 +177,37 @@ namespace Api {
             password: password
         }
         let path = `update-account-detail`
-        let res = await fetchData(path, data)
-        if (res.status == 200) {
-            return { isSuccess: true}
-        } else {
-            let message = await res.json()
-            return { isSuccess: false, error: message.error }
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                return { isSuccess: true }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
         }
     }
 
-   
+
     export async function getCustomerAllBooking(accountId: number) {
         let data = {
             accountId: accountId,
         }
         let path = `customer-all-booking`
-        let res = await fetchData(path, data)
-        if (res.status == 200) {
-            let json = await res.json()
-            console.table(json)
-            return { isSuccess: true, data: json }
-        } else {
-            let message = await res.json()
-            return { isSuccess: false, error: message.error }
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let json = await res.json()
+                console.table(json)
+                return { isSuccess: true, data: json }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
         }
     }
 
@@ -185,16 +221,41 @@ namespace Api {
 
 
 
-    function fetchData(path: string, data = {}) {
-        let requestOptions: RequestInit = {
+    // function fetchData(path: string, data = {}) {
+    //     let requestOptions: RequestInit = {
+    //         headers: {
+    //             'Content-Type': 'application/json'
+    //         },
+    //         method: 'POST',
+    //         redirect: 'follow',
+    //         body: JSON.stringify(data)
+    //     }
+    //     return fetch(`${apiURL}/${path}`, requestOptions)
+    // }
+
+    let timeout = 5000
+    async function fetchData(path: string, data = {}) {
+
+        const requestOptions: RequestInit = {
             headers: {
-                'Content-Type': 'application/json'
+                "Content-Type": "application/json",
             },
-            method: 'POST',
-            redirect: 'follow',
-            body: JSON.stringify(data)
-        }
-        return fetch(`${apiURL}/${path}`, requestOptions)
+            method: "POST",
+            redirect: "follow",
+            body: JSON.stringify(data),
+        };
+
+        const fetchPromise = fetch(`${apiURL}/${path}`, requestOptions);
+
+        // Create a timeout promise that rejects after the specified timeout
+        const timeoutPromise = new Promise<Response>((_, reject) => {
+            setTimeout(() => {
+                reject(new Error("Request timed out"));
+            }, timeout);
+        });
+
+        // Use Promise.race to resolve or reject the first promise that completes
+        return Promise.race([fetchPromise, timeoutPromise]);
     }
 
 }
