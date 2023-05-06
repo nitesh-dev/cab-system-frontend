@@ -1,13 +1,47 @@
 <script lang="ts">
 export class ProfileData {
+
     isHidden = true
     isEditable = false
+    name = ""
+    number = 0
+    email = ""
+    password = ""
+
     show() {
         this.isHidden = false
         this.isEditable = false
+        this.loadAccountData()
     }
     hide() {
         this.isHidden = true
+    }
+
+    hideProgress(){
+
+    }
+
+    showProgress(){
+
+    }
+
+    showMessage(text: string){}
+
+    async loadAccountData() {
+        let accountType = localStorage.getItem("accountType") as string
+        let accountId: number = +(localStorage.getItem("accountId") as string)
+        const res = await Api.getAccountDetail(accountId, accountType)
+        
+        if (res.isSuccess) {
+            this.hideProgress()
+            this.name = res.data.name
+            this.number = res.data.number
+            this.email = res.data.email
+            this.password = res.data.password
+        } else {
+            this.hide()
+            this.showMessage(res.error)
+        }
     }
 }
 
@@ -16,7 +50,6 @@ export class ProfileData {
 
 <script setup lang='ts'>
 import Api from '../api'
-import { ref, onMounted } from 'vue';
 
 let prop = defineProps<{
     profile: ProfileData
@@ -28,38 +61,14 @@ const emit = defineEmits<{
 
 
 
-let name = ref("")
-let number = ref<number>()
-let email = ref("")
-let password = ref("")
-
-
-
 async function onSubmitForm() {
-    emit('onToggleProgress', false)
+    prop.profile.showProgress()
 
 }
 
 function goUpdateMode() {
     prop.profile.isEditable = true
 }
-
-
-async function loadAccountData() {
-    emit('onToggleProgress', false)
-    let accountType = localStorage.getItem("accountType") as string
-    let accountId: number = +(localStorage.getItem("accountId") as string)
-    const res = await Api.getAccountDetail(accountId, accountType)
-    emit('onToggleProgress', true)
-    if (res.isSuccess) {
-
-        
-    } else {
-        alert(res.error)
-        prop.profile.hide()
-    }
-}
-
 
 
 
@@ -73,13 +82,14 @@ async function loadAccountData() {
                     <form class="form-profile" @submit.prevent="onSubmitForm">
 
                         <h1 class="h3 mb-3 font-weight-normal">Profile</h1>
-                        <input type="text" v-model="name" class="form-control" placeholder="Name" required="true"
+                        <input type="text" v-model="profile.name" class="form-control" placeholder="Name" required="true"
                             :readonly="!profile.isEditable">
-                        <input type="number" v-model="number" class="form-control" placeholder="Number" required="true"
-                            :readonly="!profile.isEditable">
-                        <input type="email" v-model="email" class="form-control" placeholder="Email address" required="true" readonly>
-                        <input type="password" v-model="password" id="inputPassword" class="form-control" placeholder="Password"
+                        <input type="number" v-model="profile.number" class="form-control" placeholder="Number"
                             required="true" :readonly="!profile.isEditable">
+                        <input type="email" v-model="profile.email" class="form-control" placeholder="Email address"
+                            required="true" readonly>
+                        <input type="text" v-model="profile.password" id="inputPassword" class="form-control"
+                            placeholder="Password" required="true" :readonly="!profile.isEditable">
 
                         <div class="row">
                             <div class="col">

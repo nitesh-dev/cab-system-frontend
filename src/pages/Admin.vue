@@ -6,13 +6,37 @@ import { ref } from 'vue';
 import Api from '../api';
 
 
-let profile = ref(new ProfileData())
 let activeTabIndex = ref(0)
 let message = ref(new Message())
 let isProgressHidden = ref(true)
 
 let accountId = ref(0)
 let accountType = ref("")
+
+const profileData = new (class extends ProfileData {
+    show() {
+        isProgressHidden.value = false
+        super.show()
+    }
+    hide(): void {
+        super.hide()
+        isProgressHidden.value = true
+    }
+
+    hideProgress(): void {
+        isProgressHidden.value = true
+    }
+
+    showProgress(): void {
+        isProgressHidden.value = false
+    }
+
+    showMessage(text: string): void {
+        message.value.show(text)
+    }
+})
+
+let profile = ref(profileData)
 
 
 
@@ -110,7 +134,7 @@ function fetchData() {
         loadCustomerAccounts(accountId.value)
     } else if (activeTabIndex.value == 2) {
         loadDriverAccounts(accountId.value)
-    }else if (activeTabIndex.value == 3) {
+    } else if (activeTabIndex.value == 3) {
         loadBookingList(accountId.value)
     }
 }
@@ -164,7 +188,7 @@ function fetchData() {
                                 <th scope="col">Type</th>
                                 <th scope="col">Rate/km</th>
                                 <th scope="col">Seats</th>
-                                <th scope="col">Edit</th>
+                                <!-- <th scope="col">Edit</th> -->
                                 <th scope="col">Delete</th>
                             </tr>
                         </thead>
@@ -175,7 +199,7 @@ function fetchData() {
                                 <td>{{ plan.type }}</td>
                                 <td>{{ plan.rate }}</td>
                                 <td>{{ plan.seats }}</td>
-                                <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
+                                <!-- <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td> -->
                                 <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
                             </tr>
                         </tbody>
@@ -260,36 +284,36 @@ function fetchData() {
             <div class="table-container">
                 <h3>Cab Booking</h3>
                 <div class="table-responsive">
-            <table class="table table-hover table-striped">
-                <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Booking ID</th>
-                        <th scope="col">Customer ID</th>
-                        <th scope="col">Driver ID</th>
-                        <th scope="col">Pick Time</th>
-                        <th scope="col">Drop Time</th>
-                        <th scope="col">Pick Loc</th>
-                        <th scope="col">Drop Loc</th>
-                        <th scope="col">Delete</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    
-                    <tr v-for="book, index in bookingList">
-                        <th scope="row">{{ index }}</th>
-                        <td>{{ book.book_id }}</td>
-                        <td>{{ book.cus_id }}</td>
-                        <td>{{ book.driver_id }}</td>
-                        <td>{{ book.pick_time }}</td>
-                        <td>{{ book.drop_time }}</td>
-                        <td>{{ book.pick_loc }}</td>
-                        <td>{{ book.drop_loc }}</td>
-                        <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+                    <table class="table table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Booking ID</th>
+                                <th scope="col">Customer ID</th>
+                                <th scope="col">Driver ID</th>
+                                <th scope="col">Pick Time</th>
+                                <th scope="col">Drop Time</th>
+                                <th scope="col">Pick Loc</th>
+                                <th scope="col">Drop Loc</th>
+                                <th scope="col">Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            <tr v-for="book, index in bookingList">
+                                <th scope="row">{{ index }}</th>
+                                <td>{{ book.book_id }}</td>
+                                <td>{{ book.cus_id }}</td>
+                                <td>{{ book.driver_id }}</td>
+                                <td>{{ book.pick_time }}</td>
+                                <td>{{ book.drop_time }}</td>
+                                <td>{{ book.pick_loc }}</td>
+                                <td>{{ book.drop_loc }}</td>
+                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

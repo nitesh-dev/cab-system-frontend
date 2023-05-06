@@ -23,7 +23,6 @@ namespace Api {
 
     export async function signUp(name: string, number: number, email: string, password: string, accountType: string) {
 
-
         let data = {
             name: name,
             number: number,
@@ -54,7 +53,7 @@ namespace Api {
         let path = `account-detail`
 
         let res = await fetchData(path, data)
-        if (res.status == 201) {
+        if (res.status == 200) {
             let json = await res.json()
             return { isSuccess: true, data: json }
         } else {
