@@ -110,7 +110,7 @@ function logout(){
     </div>
 
 
-    <ProfileDialogVue hidden />
+    <!-- <ProfileDialogVue hidden /> -->
     <MessageDialog  :message="message"/>
     <ProgressDialog v-if="!isProgressHidden"/>
 </template>

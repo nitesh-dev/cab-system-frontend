@@ -1,14 +1,32 @@
 <script setup lang='ts'>
-import ProfileDialogVue, {ProfileData} from '../components/ProfileDialog.vue';
+import ProfileDialogVue, { ProfileData } from '../components/ProfileDialog.vue';
 import MessageDialog, { Message } from '../components/MessageDialog.vue';
 import ProgressDialog from '../components/ProgressDialog.vue';
 import { ref } from 'vue';
+import Api from '../api';
 
 
 let profile = ref(new ProfileData())
-let activeTabIndex = ref(1)
+let activeTabIndex = ref(0)
 let message = ref(new Message())
 let isProgressHidden = ref(true)
+
+let accountId = ref(0)
+let accountType = ref("")
+
+
+
+getCookies()
+function getCookies() {
+    let type = localStorage.getItem("accountType")
+    let id = localStorage.getItem("accountId")
+    if (type == null || id == null) {
+        window.location.href = '/'
+    } else {
+        accountId.value = +id
+        accountType.value = type
+    }
+}
 
 function logout() {
     localStorage.removeItem("accountType")
@@ -17,19 +35,84 @@ function logout() {
 }
 
 
-function changeTab(index: number){
+function changeTab(index: number) {
     activeTabIndex.value = index
+    fetchData()
 }
 
 
-function showProfile(){
+function showProfile() {
     profile.value.show()
 }
 
 
 function toggleProgress(isHidden: boolean) {
     isProgressHidden.value = isHidden
-    
+
+}
+
+
+let tariffPlans = ref(Array())
+async function loadTariffPlans() {
+    isProgressHidden.value = false
+    let accounts = await Api.getAllPlans()
+    isProgressHidden.value = true
+    if (accounts.isSuccess == true) {
+        tariffPlans.value = accounts.data
+    } else {
+        message.value.show(accounts.error)
+    }
+}
+
+let customerAccounts = ref(Array())
+async function loadCustomerAccounts(accountId: number) {
+    isProgressHidden.value = false
+    let accounts = await Api.getAllCustomerAccounts(accountId)
+    isProgressHidden.value = true
+    if (accounts.isSuccess == true) {
+        customerAccounts.value = accounts.data
+    } else {
+        message.value.show(accounts.error)
+    }
+}
+
+let driverAccounts = ref(Array())
+async function loadDriverAccounts(accountId: number) {
+    isProgressHidden.value = false
+    let accounts = await Api.getAllDriverAccounts(accountId)
+    isProgressHidden.value = true
+    if (accounts.isSuccess == true) {
+        driverAccounts.value = accounts.data
+    } else {
+        message.value.show(accounts.error)
+    }
+}
+
+let bookingList = ref(Array())
+async function loadBookingList(accountId: number) {
+    isProgressHidden.value = false
+    let accounts = await Api.getAllBookingList(accountId)
+    isProgressHidden.value = true
+    if (accounts.isSuccess == true) {
+        bookingList.value = accounts.data
+    } else {
+        message.value.show(accounts.error)
+    }
+}
+
+
+function fetchData() {
+    // fetch data
+    console.log("fetching...")
+    if (activeTabIndex.value == 0) {
+        loadTariffPlans()
+    } else if (activeTabIndex.value == 1) {
+        loadCustomerAccounts(accountId.value)
+    } else if (activeTabIndex.value == 2) {
+        loadDriverAccounts(accountId.value)
+    }else if (activeTabIndex.value == 3) {
+        loadBookingList(accountId.value)
+    }
 }
 
 
@@ -62,7 +145,9 @@ function toggleProgress(isHidden: boolean) {
         </ul>
     </div>
     <div class="tab-content" id="pills-tabContent">
-        <div class="tab-pane fade" :class="{show: activeTabIndex == 0, active: activeTabIndex == 0}">
+
+        <!-- Tariff Plans -->
+        <div class="tab-pane fade" :class="{ show: activeTabIndex == 0, active: activeTabIndex == 0 }">
 
             <div class="table-container">
                 <div class="container">
@@ -84,43 +169,23 @@ function toggleProgress(isHidden: boolean) {
                             </tr>
                         </thead>
                         <tbody>
-
-                            <tr>
-                                <th scope="row">1</th>
-                                <td>5845825822</td>
-                                <td>Bike</td>
-                                <td>30</td>
-                                <td>1</td>
+                            <tr v-for="plan, index in tariffPlans">
+                                <th scope="row">{{ index }}</th>
+                                <td>{{ plan.tarif_id }}</td>
+                                <td>{{ plan.type }}</td>
+                                <td>{{ plan.rate }}</td>
+                                <td>{{ plan.seats }}</td>
                                 <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
                                 <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
                             </tr>
-
-                            <tr>
-                                <th scope="row">2</th>
-                                <td>5845825822</td>
-                                <td>Alto</td>
-                                <td>60</td>
-                                <td>3</td>
-                                <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
-                            </tr>
-
-                            <tr>
-                                <th scope="row">3</th>
-                                <td>5845825822</td>
-                                <td>Nano</td>
-                                <td>50</td>
-                                <td>2</td>
-                                <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
-                            </tr>
-
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-        <div class="tab-pane fade" :class="{show: activeTabIndex == 1, active: activeTabIndex == 1}">
+
+        <!-- Customer accounts -->
+        <div class="tab-pane fade" :class="{ show: activeTabIndex == 1, active: activeTabIndex == 1 }">
             <div class="table-container">
                 <h3>Customer Accounts</h3>
                 <div class="table-responsive">
@@ -132,39 +197,17 @@ function toggleProgress(isHidden: boolean) {
                                 <th scope="col">Name</th>
                                 <th scope="col">Email</th>
                                 <th scope="col">Phone</th>
-                                <th scope="col">Edit</th>
                                 <th scope="col">Delete</th>
                             </tr>
                         </thead>
                         <tbody>
 
-                            <tr>
-                                <th scope="row">1</th>
-                                <td>5845825822</td>
-                                <td>Test Name</td>
-                                <td>Test@gmail.com</td>
-                                <td>5456893256</td>
-                                <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
-
-                            </tr>
-
-                            <tr>
-                                <th scope="row">2</th>
-                                <td>5845825822</td>
-                                <td>Test Name</td>
-                                <td>Test@gmail.com</td>
-                                <td>5456893256</td>
-                                <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
-                            </tr>
-                            <tr>
-                                <th scope="row">3</th>
-                                <td>5845825822</td>
-                                <td>Test Name</td>
-                                <td>Test@gmail.com</td>
-                                <td>5456893256</td>
-                                <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
+                            <tr v-for="account, index in customerAccounts">
+                                <th scope="row">{{ index }}</th>
+                                <td>{{ account.account_id }}</td>
+                                <td>{{ account.name }}</td>
+                                <td>{{ account.email }}</td>
+                                <td>{{ account.phone }}</td>
                                 <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
                             </tr>
 
@@ -173,7 +216,9 @@ function toggleProgress(isHidden: boolean) {
                 </div>
             </div>
         </div>
-        <div class="tab-pane fade" :class="{show: activeTabIndex == 2, active: activeTabIndex == 2}">
+
+        <!-- Driver accounts -->
+        <div class="tab-pane fade" :class="{ show: activeTabIndex == 2, active: activeTabIndex == 2 }">
             <div class="table-container">
                 <h3>Driver Accounts</h3>
                 <div class="table-responsive">
@@ -186,43 +231,20 @@ function toggleProgress(isHidden: boolean) {
                                 <th scope="col">Name</th>
                                 <th scope="col">Email</th>
                                 <th scope="col">Phone</th>
-                                <th scope="col">Edit</th>
                                 <th scope="col">Delete</th>
                             </tr>
                         </thead>
                         <tbody>
 
-                            <tr>
-                                <th scope="row">1</th>
-                                <td>5845825822</td>
-                                <td>5845825822</td>
-                                <td>Test Name</td>
-                                <td>Test@gmail.com</td>
-                                <td>5456893256</td>
-                                <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
+                            <tr v-for="account, index in driverAccounts">
+                                <th scope="row">{{ index }}</th>
+                                <td>{{ account.account_id }}</td>
+                                <td>{{ account.vehicle_id }}</td>
+                                <td>{{ account.name }}</td>
+                                <td>{{ account.email }}</td>
+                                <td>{{ account.phone }}</td>
                                 <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
 
-                            </tr>
-
-                            <tr>
-                                <th scope="row">2</th>
-                                <td>5845825822</td>
-                                <td>5845825822</td>
-                                <td>Test Name</td>
-                                <td>Test@gmail.com</td>
-                                <td>5456893256</td>
-                                <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
-                            </tr>
-                            <tr>
-                                <th scope="row">3</th>
-                                <td>5845825822</td>
-                                <td>5845825822</td>
-                                <td>Test Name</td>
-                                <td>Test@gmail.com</td>
-                                <td>5456893256</td>
-                                <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
                             </tr>
 
                         </tbody>
@@ -231,64 +253,50 @@ function toggleProgress(isHidden: boolean) {
             </div>
 
         </div>
-        <div class="tab-pane fade" :class="{show: activeTabIndex == 3, active: activeTabIndex == 3}">
+
+        <!-- Booking -->
+        <!-- cab_books - book_id, cus_id, driver_id, pick_time, drop_time, pick_loc, drop_loc -->
+        <div class="tab-pane fade" :class="{ show: activeTabIndex == 3, active: activeTabIndex == 3 }">
             <div class="table-container">
                 <h3>Cab Booking</h3>
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped">
-                        <thead>
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Customer ID</th>
-                                <th scope="col">Name</th>
-                                <th scope="col">Email</th>
-                                <th scope="col">Phone</th>
-                                <th scope="col">Edit</th>
-                                <th scope="col">Delete</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-
-                            <tr>
-                                <th scope="row">1</th>
-                                <td>5845825822</td>
-                                <td>Test Name</td>
-                                <td>Test@gmail.com</td>
-                                <td>5456893256</td>
-                                <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
-
-                            </tr>
-
-                            <tr>
-                                <th scope="row">2</th>
-                                <td>5845825822</td>
-                                <td>Test Name</td>
-                                <td>Test@gmail.com</td>
-                                <td>5456893256</td>
-                                <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
-                            </tr>
-                            <tr>
-                                <th scope="row">3</th>
-                                <td>5845825822</td>
-                                <td>Test Name</td>
-                                <td>Test@gmail.com</td>
-                                <td>5456893256</td>
-                                <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
-                            </tr>
-
-                        </tbody>
-                    </table>
-                </div>
+            <table class="table table-hover table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Booking ID</th>
+                        <th scope="col">Customer ID</th>
+                        <th scope="col">Driver ID</th>
+                        <th scope="col">Pick Time</th>
+                        <th scope="col">Drop Time</th>
+                        <th scope="col">Pick Loc</th>
+                        <th scope="col">Drop Loc</th>
+                        <th scope="col">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr v-for="book, index in bookingList">
+                        <th scope="row">{{ index }}</th>
+                        <td>{{ book.book_id }}</td>
+                        <td>{{ book.cus_id }}</td>
+                        <td>{{ book.driver_id }}</td>
+                        <td>{{ book.pick_time }}</td>
+                        <td>{{ book.drop_time }}</td>
+                        <td>{{ book.pick_loc }}</td>
+                        <td>{{ book.drop_loc }}</td>
+                        <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
             </div>
         </div>
     </div>
 
 
     <ProfileDialogVue @on-toggle-progress="toggleProgress" :profile="profile" />
-    <MessageDialog  :message="message" />
+    <MessageDialog :message="message" />
     <ProgressDialog v-if="!isProgressHidden" />
 </template>
 <style scoped>
