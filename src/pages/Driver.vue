@@ -1,17 +1,117 @@
+<script lang="ts">
+export class DriverTask {
+    activeTask = Array()
+    registeredTask = Array()
+    historyTask = Array()
+}
+
+</script>
+
+
 <script setup lang='ts'>
 import ProfileDialogVue from '../components/ProfileDialog.vue';
 import MessageDialog, { Message } from '../components/MessageDialog.vue';
 import ProgressDialog from '../components/ProgressDialog.vue';
 import { ref } from 'vue';
+import Api from '../api';
 
 
 let message = ref(new Message())
 let isProgressHidden = ref(true)
 
-function logout(){
+let accountId = ref(0)
+let accountType = ref("")
+
+
+
+getCookies()
+function getCookies() {
+    let type = localStorage.getItem("accountType")
+    let id = localStorage.getItem("accountId")
+    if (type == null || id == null) {
+        window.location.href = '/'
+    } else {
+        accountId.value = +id
+        accountType.value = type
+    }
+}
+
+function logout() {
     localStorage.removeItem("accountType")
     localStorage.removeItem("accountId")
     window.location.href = '/'
+}
+
+
+let driverAllTask = ref(new DriverTask())
+async function loadDriverTaskList(accountId: number) {
+    isProgressHidden.value = false
+    let tasks = await Api.getDriverAllTaskList(accountId)
+    isProgressHidden.value = true
+
+    let currentDateTime = new Date().getTime()
+    if (tasks.isSuccess == true) {
+        for (let index = 0; index < tasks.data.length; index++) {
+            let task = tasks.data[index]
+            let startTime = task.pick_time
+            let endTime = task.drop_time
+            if (currentDateTime >= startTime && currentDateTime <= endTime) {
+                driverAllTask.value.activeTask.push(task)
+            } else if (currentDateTime < startTime && currentDateTime < endTime) {
+                driverAllTask.value.registeredTask.push(task)
+            } else {
+                driverAllTask.value.historyTask.push(task)
+            }
+        }
+    } else {
+        message.value.show(tasks.error)
+    }
+}
+
+
+fetchData()
+
+function fetchData() {
+    if (accountId.value == 0) return
+    // fetch data
+    console.log("fetching...")
+    loadDriverTaskList(accountId.value)
+
+}
+
+
+function unixMillisecondsToDateString(unixMilliseconds: number) {
+    // Create a new Date object with the Unix timestamp in milliseconds
+    const date = new Date(unixMilliseconds);
+
+    // Extract the day, month, and year from the date object
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'short' });
+    const year = date.getFullYear();
+
+    // Extract the hours and minutes from the date object
+    let hours = date.getHours();
+    let minutes: any = date.getMinutes();
+
+    // Convert the hours to 12-hour format and determine whether it's AM or PM
+    let amOrPm = 'AM';
+    if (hours >= 12) {
+        amOrPm = 'PM';
+        hours -= 12;
+    }
+    if (hours === 0) {
+        hours = 12;
+    }
+
+    // Add leading zeros to the minutes if needed
+    if (minutes < 10) {
+        minutes = '0' + minutes;
+    }
+
+    // Construct the date string in the desired format
+    const dateString = `${day} ${month} ${year}, ${hours}:${minutes} ${amOrPm}`;
+
+    return dateString;
 }
 
 </script>
@@ -51,59 +151,44 @@ function logout(){
                     <tr class="blank_row">
                         <th colspan="8">Active</th>
                     </tr>
-                    <tr class="table-active">
-                        <th scope="row">1</th>
-                        <td>5845825822</td>
-                        <td>5852258525</td>
-                        <td>12 dec 2023, 10:30 AM</td>
-                        <td>12 dec 2023, 11:30 AM</td>
-                        <td>India, Bihar, Patna</td>
-                        <td>India, Bihar, Hajipur</td>
+                    <tr class="table-active" v-for="task, index in driverAllTask.activeTask">
+                        <th scope="row">{{ index }}</th>
+                        <td>{{ task.book_id }}</td>
+                        <td>{{ task.cus_id }}</td>
+                        <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
+                        <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
+                        <td>{{ task.drop_loc }}</td>
+                        <td>{{ task.pick_loc }}</td>
                     </tr>
                     <tr class="blank_row">
                         <th colspan="8">Registered Task</th>
                     </tr>
-                    <tr>
-                        <th scope="row">1</th>
-                        <td>5845825822</td>
-                        <td>5852258525</td>
-                        <td>12 dec 2023, 10:30 AM</td>
-                        <td>12 dec 2023, 11:30 AM</td>
-                        <td>India, Bihar, Patna</td>
-                        <td>India, Bihar, Hajipur</td>
+                    <tr v-for="task, index in driverAllTask.registeredTask">
+                        <th scope="row">{{ index }}</th>
+                        <td>{{ task.book_id }}</td>
+                        <td>{{ task.cus_id }}</td>
+                        <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
+                        <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
+                        <td>{{ task.drop_loc }}</td>
+                        <td>{{ task.pick_loc }}</td>
                     </tr>
-                    <tr>
-                        <th scope="row">2</th>
-                        <td>5845825822</td>
-                        <td>5852258525</td>
-                        <td>12 dec 2023, 10:30 AM</td>
-                        <td>12 dec 2023, 11:30 AM</td>
-                        <td>India, Bihar, Patna</td>
-                        <td>India, Bihar, Hajipur</td>
-                    </tr>
+
 
                     <tr class="blank_row">
                         <th colspan="8">History</th>
                     </tr>
 
-                    <tr>
-                        <th scope="row">1</th>
-                        <td>5845825822</td>
-                        <td>5852258525</td>
-                        <td>12 dec 2023, 10:30 AM</td>
-                        <td>12 dec 2023, 11:30 AM</td>
-                        <td>India, Bihar, Patna</td>
-                        <td>India, Bihar, Hajipur</td>
+                    <tr v-for="task, index in driverAllTask.historyTask">
+                        <th scope="row">{{ index }}</th>
+                        <td>{{ task.book_id }}</td>
+                        <td>{{ task.cus_id }}</td>
+                        <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
+                        <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
+                        <td>{{ task.drop_loc }}</td>
+                        <td>{{ task.pick_loc }}</td>
                     </tr>
-                    <tr>
-                        <th scope="row">2</th>
-                        <td>5845825822</td>
-                        <td>5852258525</td>
-                        <td>12 dec 2023, 10:30 AM</td>
-                        <td>12 dec 2023, 11:30 AM</td>
-                        <td>India, Bihar, Patna</td>
-                        <td>India, Bihar, Hajipur</td>
-                    </tr>
+
+
                 </tbody>
             </table>
         </div>
@@ -111,8 +196,8 @@ function logout(){
 
 
     <!-- <ProfileDialogVue hidden /> -->
-    <MessageDialog  :message="message"/>
-    <ProgressDialog v-if="!isProgressHidden"/>
+    <MessageDialog :message="message" />
+    <ProgressDialog v-if="!isProgressHidden" />
 </template>
 <style scoped>
 .cab-history {

@@ -124,6 +124,22 @@ namespace Api {
         }
     }
 
+    // driver-all-task
+    export async function getDriverAllTaskList(accountId: number) {
+        let data = {
+            accountId: accountId
+        }
+        let path = `driver-all-task`
+        let res = await fetchData(path, data)
+        if (res.status == 200) {
+            let json = await res.json()
+            return { isSuccess: true, data: json }
+        } else {
+            let message = await res.json()
+            return { isSuccess: false, error: message.error }
+        }
+    }
+
 
 
 

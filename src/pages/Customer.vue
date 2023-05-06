@@ -72,7 +72,7 @@ function logout(){
                     <tr>
                         <th scope="col">#</th>
                         <th scope="col">Booking ID</th>
-                        <th scope="col">Customer ID</th>
+                        <th scope="col">Driver ID</th>
                         <th scope="col">Pick Time</th>
                         <th scope="col">Drop Time</th>
                         <th scope="col">Pick Loc</th>
