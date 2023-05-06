@@ -1,17 +1,152 @@
+<script lang="ts">
+export class CustomerBooking {
+    activeBook = Array()
+    registeredBook = Array()
+    historyBook = Array()
+}
+
+</script>
+
+
 <script setup lang='ts'>
-import ProfileDialogVue from '../components/ProfileDialog.vue';
+import ProfileDialogVue, { ProfileData } from '../components/ProfileDialog.vue';
 import MessageDialog, { Message } from '../components/MessageDialog.vue';
 import ProgressDialog from '../components/ProgressDialog.vue';
 import { ref } from 'vue';
+import Api from '../api';
 
 let message = ref(new Message())
 let isProgressHidden = ref(true)
+let accountId = ref(0)
+let accountType = ref("")
 
-function logout(){
+
+
+getCookies()
+function getCookies() {
+    let type = localStorage.getItem("accountType")
+    let id = localStorage.getItem("accountId")
+    if (type == null || id == null) {
+        window.location.href = '/'
+    } else {
+        accountId.value = +id
+        accountType.value = type
+    }
+}
+
+function logout() {
     localStorage.removeItem("accountType")
     localStorage.removeItem("accountId")
     window.location.href = '/'
 }
+
+const profileData = new (class extends ProfileData {
+    show() {
+        isProgressHidden.value = false
+        super.show()
+    }
+    hide(): void {
+        super.hide()
+        isProgressHidden.value = true
+    }
+
+    hideProgress(): void {
+        isProgressHidden.value = true
+    }
+
+    showProgress(): void {
+        isProgressHidden.value = false
+    }
+
+    showMessage(text: string): void {
+        message.value.show(text)
+    }
+})
+
+let profile = ref(profileData)
+
+function showProfile() {
+    profile.value.show()
+}
+
+
+
+let customerAllBooking = ref(new CustomerBooking())
+async function loadCustomerAllBooking(accountId: number) {
+    isProgressHidden.value = false
+    let booking = await Api.getDriverAllTaskList(accountId)
+    isProgressHidden.value = true
+
+    let currentDateTime = new Date().getTime()
+    if (booking.isSuccess == true) {
+        
+        for (let index = 0; index < booking.data.length; index++) {
+            let task = booking.data[index]
+            let startTime = task.pick_time
+            let endTime = task.drop_time
+
+            if (currentDateTime >= startTime && currentDateTime <= endTime) {
+                customerAllBooking.value.activeBook.push(task)
+            } else if (currentDateTime < startTime && currentDateTime < endTime) {
+                customerAllBooking.value.registeredBook.push(task)
+            } else {
+                customerAllBooking.value.historyBook.push(task)
+            }
+        }
+    } else {
+        message.value.show(booking.error)
+    }
+}
+
+
+
+
+fetchData()
+
+function fetchData() {
+    if (accountId.value == 0) return
+    // fetch data
+    console.log("fetching...")
+    loadCustomerAllBooking(accountId.value)
+
+}
+
+
+function unixMillisecondsToDateString(unixMilliseconds: number) {
+    // Create a new Date object with the Unix timestamp in milliseconds
+    const date = new Date(unixMilliseconds);
+
+    // Extract the day, month, and year from the date object
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'short' });
+    const year = date.getFullYear();
+
+    // Extract the hours and minutes from the date object
+    let hours = date.getHours();
+    let minutes: any = date.getMinutes();
+
+    // Convert the hours to 12-hour format and determine whether it's AM or PM
+    let amOrPm = 'AM';
+    if (hours >= 12) {
+        amOrPm = 'PM';
+        hours -= 12;
+    }
+    if (hours === 0) {
+        hours = 12;
+    }
+
+    // Add leading zeros to the minutes if needed
+    if (minutes < 10) {
+        minutes = '0' + minutes;
+    }
+
+    // Construct the date string in the desired format
+    const dateString = `${day} ${month} ${year}, ${hours}:${minutes} ${amOrPm}`;
+
+    return dateString;
+}
+
+
 
 </script>
 <template>
@@ -20,12 +155,7 @@ function logout(){
             <div class="navbar-header">
                 <a class="navbar-brand">BookMyCab</a>
             </div>
-            <ul class="nav nav-pills">
-                <li class="nav-item">
-                    <a class="nav-link active" href="#">Profile</a>
-                </li>
-
-            </ul>
+            <button class="btn btn-primary" @click="showProfile">Profile</button>
             <button class="btn btn-danger" type="submit" @click="logout">Log out</button>
         </div>
     </nav>
@@ -81,69 +211,51 @@ function logout(){
                 </thead>
                 <tbody>
                     <tr class="blank_row">
-                        <th colspan="8">Active</th>
+                        <th colspan="7">Active</th>
                     </tr>
-                    <tr class="table-active">
-                        <th scope="row">1</th>
-                        <td>5845825822</td>
-                        <td>5852258525</td>
-                        <td>12 dec 2023, 10:30 AM</td>
-                        <td>12 dec 2023, 11:30 AM</td>
-                        <td>India, Bihar, Patna</td>
-                        <td>India, Bihar, Hajipur</td>
-                    </tr>
-                    <tr class="blank_row">
-                        <th colspan="8">Registered Task</th>
-                    </tr>
-                    <tr>
-                        <th scope="row">1</th>
-                        <td>5845825822</td>
-                        <td>5852258525</td>
-                        <td>12 dec 2023, 10:30 AM</td>
-                        <td>12 dec 2023, 11:30 AM</td>
-                        <td>India, Bihar, Patna</td>
-                        <td>India, Bihar, Hajipur</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">2</th>
-                        <td>5845825822</td>
-                        <td>5852258525</td>
-                        <td>12 dec 2023, 10:30 AM</td>
-                        <td>12 dec 2023, 11:30 AM</td>
-                        <td>India, Bihar, Patna</td>
-                        <td>India, Bihar, Hajipur</td>
+                    <tr class="table-active" v-for="task, index in customerAllBooking.activeBook">
+                        <th scope="row">{{ index + 1 }}</th>
+                        <td>{{ task.book_id }}</td>
+                        <td>{{ task.driver_id }}</td>
+                        <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
+                        <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
+                        <td>{{ task.drop_loc }}</td>
+                        <td>{{ task.pick_loc }}</td>
                     </tr>
 
                     <tr class="blank_row">
-                        <th colspan="8">History</th>
+                        <th colspan="7">Registered Task</th>
+                    </tr>
+                    <tr v-for="task, index in customerAllBooking.registeredBook">
+                        <th scope="row">{{ index + 1 }}</th>
+                        <td>{{ task.book_id }}</td>
+                        <td>{{ task.driver_id }}</td>
+                        <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
+                        <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
+                        <td>{{ task.drop_loc }}</td>
+                        <td>{{ task.pick_loc }}</td>
                     </tr>
 
-                    <tr>
-                        <th scope="row">1</th>
-                        <td>5845825822</td>
-                        <td>5852258525</td>
-                        <td>12 dec 2023, 10:30 AM</td>
-                        <td>12 dec 2023, 11:30 AM</td>
-                        <td>India, Bihar, Patna</td>
-                        <td>India, Bihar, Hajipur</td>
+                    <tr class="blank_row">
+                        <th colspan="7">History</th>
                     </tr>
-                    <tr>
-                        <th scope="row">2</th>
-                        <td>5845825822</td>
-                        <td>5852258525</td>
-                        <td>12 dec 2023, 10:30 AM</td>
-                        <td>12 dec 2023, 11:30 AM</td>
-                        <td>India, Bihar, Patna</td>
-                        <td>India, Bihar, Hajipur</td>
+                    <tr v-for="task, index in customerAllBooking.historyBook">
+                        <th scope="row">{{ index + 1 }}</th>
+                        <td>{{ task.book_id }}</td>
+                        <td>{{ task.driver_id }}</td>
+                        <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
+                        <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
+                        <td>{{ task.drop_loc }}</td>
+                        <td>{{ task.pick_loc }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <ProfileDialogVue hidden />
-    <MessageDialog :message="message"/>
-    <ProgressDialog v-if="!isProgressHidden"/>
+    <ProfileDialogVue :profile="profile" />
+    <MessageDialog :message="message" />
+    <ProgressDialog v-if="!isProgressHidden" />
 </template>
 <style scoped>
 .row {
@@ -182,13 +294,12 @@ form>button {
     margin-bottom: 30px;
 }
 
-.blank_row
-{
+.blank_row {
     background-color: #FFFFFF;
 }
 
 
-.blank_row th{
+.blank_row th {
     padding-top: 40px;
     text-align: center !important;
 }

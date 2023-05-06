@@ -17,21 +17,21 @@ export class ProfileData {
         this.isHidden = true
     }
 
-    hideProgress(){
+    hideProgress() {
 
     }
 
-    showProgress(){
+    showProgress() {
 
     }
 
-    showMessage(text: string){}
+    showMessage(text: string) { }
 
     async loadAccountData() {
         let accountType = localStorage.getItem("accountType") as string
         let accountId: number = +(localStorage.getItem("accountId") as string)
         const res = await Api.getAccountDetail(accountId, accountType)
-        
+
         if (res.isSuccess) {
             this.hideProgress()
             this.name = res.data.name
@@ -55,14 +55,21 @@ let prop = defineProps<{
     profile: ProfileData
 }>()
 
-const emit = defineEmits<{
-    (e: 'onToggleProgress', isHidden: boolean): void
-}>()
-
 
 
 async function onSubmitForm() {
+
+    let accountType = localStorage.getItem("accountType") as string
+    let accountId: number = +(localStorage.getItem("accountId") as string)
     prop.profile.showProgress()
+    let result = await Api.updateAccount(accountType, accountId, prop.profile.name, prop.profile.number.toString(), prop.profile.password)
+    prop.profile.hideProgress()
+    prop.profile.hide()
+    if (result.isSuccess == false) {
+        prop.profile.showMessage(result.error)
+    }else{
+        prop.profile.showMessage("Successfully updated")
+    }
 
 }
 

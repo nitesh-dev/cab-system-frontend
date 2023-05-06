@@ -9,7 +9,7 @@ export class DriverTask {
 
 
 <script setup lang='ts'>
-import ProfileDialogVue from '../components/ProfileDialog.vue';
+import ProfileDialogVue, { ProfileData } from '../components/ProfileDialog.vue';
 import MessageDialog, { Message } from '../components/MessageDialog.vue';
 import ProgressDialog from '../components/ProgressDialog.vue';
 import { ref } from 'vue';
@@ -69,6 +69,38 @@ async function loadDriverTaskList(accountId: number) {
 }
 
 
+const profileData = new (class extends ProfileData {
+    show() {
+        isProgressHidden.value = false
+        super.show()
+    }
+    hide(): void {
+        super.hide()
+        isProgressHidden.value = true
+    }
+
+    hideProgress(): void {
+        isProgressHidden.value = true
+    }
+
+    showProgress(): void {
+        isProgressHidden.value = false
+    }
+
+    showMessage(text: string): void {
+        message.value.show(text)
+    }
+})
+
+let profile = ref(profileData)
+
+function showProfile() {
+    profile.value.show()
+}
+
+
+
+
 fetchData()
 
 function fetchData() {
@@ -121,13 +153,7 @@ function unixMillisecondsToDateString(unixMilliseconds: number) {
             <div class="navbar-header">
                 <a class="navbar-brand">BookMyCab</a>
             </div>
-            <ul class="nav nav-pills">
-
-                <li class="nav-item">
-                    <a class="nav-link active" href="#">Profile</a>
-                </li>
-
-            </ul>
+            <button class="btn btn-primary" @click="showProfile">Profile</button>
             <button class="btn btn-danger" type="submit" @click="logout">Log out</button>
         </div>
     </nav>
@@ -195,7 +221,7 @@ function unixMillisecondsToDateString(unixMilliseconds: number) {
     </div>
 
 
-    <!-- <ProfileDialogVue hidden /> -->
+    <ProfileDialogVue :profile="profile" />
     <MessageDialog :message="message" />
     <ProgressDialog v-if="!isProgressHidden" />
 </template>

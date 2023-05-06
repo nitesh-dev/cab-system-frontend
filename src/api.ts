@@ -21,7 +21,7 @@ namespace Api {
 
     }
 
-    export async function signUp(name: string, number: number, email: string, password: string, accountType: string) {
+    export async function signUp(name: string, number: string, email: string, password: string, accountType: string) {
 
         let data = {
             name: name,
@@ -139,6 +139,41 @@ namespace Api {
         }
     }
 
+
+    export async function updateAccount(accountType: string, accountId: number, name: string, number: string, password: string) {
+        let data = {
+            accountId: accountId,
+            accountType: accountType,
+            name: name,
+            number: number,
+            password: password
+        }
+        let path = `update-account-detail`
+        let res = await fetchData(path, data)
+        if (res.status == 200) {
+            return { isSuccess: true}
+        } else {
+            let message = await res.json()
+            return { isSuccess: false, error: message.error }
+        }
+    }
+
+   
+    export async function getCustomerAllBooking(accountId: number) {
+        let data = {
+            accountId: accountId,
+        }
+        let path = `customer-all-booking`
+        let res = await fetchData(path, data)
+        if (res.status == 200) {
+            let json = await res.json()
+            console.table(json)
+            return { isSuccess: true, data: json }
+        } else {
+            let message = await res.json()
+            return { isSuccess: false, error: message.error }
+        }
+    }
 
 
 

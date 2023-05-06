@@ -22,7 +22,7 @@ function saveCookies(accountType: string, accountId: number) {
 async function onSubmitForm() {
  
   isProgressHidden.value = false
-  const res = await Api.signUp(name.value, number.value as number, email.value, password.value, accountType.value)
+  const res = await Api.signUp(name.value, (number.value as number).toString(), email.value, password.value, accountType.value)
   isProgressHidden.value = true
   if (res.isSuccess) {
     saveCookies(res.accountType, res.accountId)

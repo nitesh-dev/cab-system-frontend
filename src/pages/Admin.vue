@@ -70,11 +70,6 @@ function showProfile() {
 }
 
 
-function toggleProgress(isHidden: boolean) {
-    isProgressHidden.value = isHidden
-
-}
-
 
 let tariffPlans = ref(Array())
 async function loadTariffPlans() {
@@ -319,7 +314,7 @@ function fetchData() {
     </div>
 
 
-    <ProfileDialogVue @on-toggle-progress="toggleProgress" :profile="profile" />
+    <ProfileDialogVue :profile="profile" />
     <MessageDialog :message="message" />
     <ProgressDialog v-if="!isProgressHidden" />
 </template>
