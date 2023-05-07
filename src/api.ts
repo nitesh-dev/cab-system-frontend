@@ -212,28 +212,108 @@ namespace Api {
     }
 
 
+    export async function createUpdateVehicle(vehicleId: number, type: string, rate: number, seats: number, isCreate: boolean) {
+        let data = {
+            vehicleId: vehicleId,
+            type: type,
+            rate: rate,
+            seats: seats,
+            isCreate: isCreate
+        }
+
+        let path = `create-update-vehicle`
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let message = await res.json()
+                return { isSuccess: true, data: message.data }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
+        }
+
+    }
+
+
+    export async function deleteOperation(tableName: string, id: number) {
+
+        let data = {
+            tableName: tableName,
+            id: id
+        }
+
+        let path = `delete`
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let message = await res.json()
+                return { isSuccess: true, data: message.data }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
+        }
+
+    }
+
+
+    export async function getVehicleDetails() {
+        let data = {}
+        let path = `vehicle-detail`
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let json = await res.json()
+                return { isSuccess: true, data: json }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
+        }
+    }
+
+
+    // mode - search-register, register, join
+    export async function bookCab(mode: string, customerId: number, driverId: number, pickTime: number, dropTime: number, pickLoc: string, dropLoc: string, vehicleName: string, amount: number, bookMode: string) {
+        let data = {
+            mode: mode,
+            customerId: customerId,
+            driverId: driverId,
+            pickTime: pickTime,
+            dropTime: dropTime,
+            pickLoc: pickLoc,
+            dropLoc: dropLoc,
+            vehicleName: vehicleName,
+            amount: amount,
+            bookMode: bookMode
+        }
+        let path = `book-cab`
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let json = await res.json()
+                return { isSuccess: true, data: json }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
+        }
+    }
 
 
 
 
 
-
-
-
-
-    // function fetchData(path: string, data = {}) {
-    //     let requestOptions: RequestInit = {
-    //         headers: {
-    //             'Content-Type': 'application/json'
-    //         },
-    //         method: 'POST',
-    //         redirect: 'follow',
-    //         body: JSON.stringify(data)
-    //     }
-    //     return fetch(`${apiURL}/${path}`, requestOptions)
-    // }
-
-    let timeout = 5000
+    let timeout = 10000
     async function fetchData(path: string, data = {}) {
 
         const requestOptions: RequestInit = {

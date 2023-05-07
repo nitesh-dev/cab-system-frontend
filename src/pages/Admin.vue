@@ -4,6 +4,8 @@ import MessageDialog, { Message } from '../components/MessageDialog.vue';
 import ProgressDialog from '../components/ProgressDialog.vue';
 import { ref } from 'vue';
 import Api from '../api';
+import VehicleDialogVue, { VehicleData } from '../components/VehicleDialog.vue';
+import WarningDialogVue, { WarningData } from '../components/WarningDialog.vue';
 
 
 let activeTabIndex = ref(0)
@@ -38,6 +40,56 @@ const profileData = new (class extends ProfileData {
 
 let profile = ref(profileData)
 
+const vehicleData = new (class extends VehicleData {
+
+    create(): void {
+        super.create()
+    }
+
+    edit(vehicleId: number, type:string, rate: number, seats: number): void {
+        super.edit(vehicleId, type, rate, seats)
+    }
+
+    reloadData(): void {
+        fetchData()
+    }
+
+    hideProgress(): void {
+        isProgressHidden.value = true
+    }
+
+    showProgress(): void {
+        isProgressHidden.value = false
+    }
+
+    showMessage(text: string): void {
+        message.value.show(text)
+    }
+})
+
+let vehicle = ref(vehicleData)
+
+
+const warningData = new (class extends WarningData{
+    onOk(): void {
+        // do delete operation
+        deleteData()
+        this.hide()
+    }
+
+    show(message: string): void {
+        super.show(message)
+    }
+
+})
+
+let warning = ref(warningData)
+
+
+
+
+
+
 
 
 getCookies()
@@ -49,6 +101,8 @@ function getCookies() {
     } else {
         accountId.value = +id
         accountType.value = type
+
+        fetchData()
     }
 }
 
@@ -71,13 +125,13 @@ function showProfile() {
 
 
 
-let tariffPlans = ref(Array())
-async function loadTariffPlans() {
+let vehiclePlan = ref(Array())
+async function loadVehiclePlans() {
     isProgressHidden.value = false
     let accounts = await Api.getAllPlans()
     isProgressHidden.value = true
     if (accounts.isSuccess == true) {
-        tariffPlans.value = accounts.data
+        vehiclePlan.value = accounts.data
     } else {
         message.value.show(accounts.error)
     }
@@ -124,7 +178,7 @@ function fetchData() {
     // fetch data
     console.log("fetching...")
     if (activeTabIndex.value == 0) {
-        loadTariffPlans()
+        loadVehiclePlans()
     } else if (activeTabIndex.value == 1) {
         loadCustomerAccounts(accountId.value)
     } else if (activeTabIndex.value == 2) {
@@ -132,6 +186,40 @@ function fetchData() {
     } else if (activeTabIndex.value == 3) {
         loadBookingList(accountId.value)
     }
+}
+
+async function deleteData() {
+    // fetch data
+    console.log("deleting...")
+    let tableName = null
+
+    if (activeTabIndex.value == 0) {
+        tableName = 'vehicles'
+    } else if (activeTabIndex.value == 1) {
+        tableName = 'customers'
+    } else if (activeTabIndex.value == 2) {
+        tableName = 'drivers'
+    } else if (activeTabIndex.value == 3) {
+        tableName = 'cab_books'
+    }
+
+    if(tableName == null) return
+
+    isProgressHidden.value = false
+    let result = await Api.deleteOperation(tableName, idToDelete)
+    isProgressHidden.value = true
+    if (result.isSuccess == true) {
+        fetchData()
+    } else {
+        message.value.show(result.error)
+    }
+}
+
+
+let idToDelete = 0
+function deleteOperation(message: string, id: number){
+    idToDelete = id
+    warning.value.show(message)
 }
 
 
@@ -170,8 +258,8 @@ function fetchData() {
 
             <div class="table-container">
                 <div class="container">
-                    <h3>Tarif Plans</h3>
-                    <button id="add-plan" class="btn btn-success btn-block">Add Plan</button>
+                    <h3>Vehicle Plans</h3>
+                    <button id="add-plan" class="btn btn-success btn-block" @click="vehicle.create()">Add Plan</button>
                 </div>
 
                 <div class="table-responsive">
@@ -179,23 +267,23 @@ function fetchData() {
                         <thead>
                             <tr>
                                 <th scope="col">#</th>
-                                <th scope="col">Tarif ID</th>
-                                <th scope="col">Type</th>
+                                <th scope="col">Vehicle ID</th>
+                                <th scope="col">Name</th>
                                 <th scope="col">Rate/km</th>
                                 <th scope="col">Seats</th>
-                                <!-- <th scope="col">Edit</th> -->
+                                <th scope="col">Edit</th>
                                 <th scope="col">Delete</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="plan, index in tariffPlans">
+                            <tr v-for="plan, index in vehiclePlan">
                                 <th scope="row">{{ index }}</th>
-                                <td>{{ plan.tarif_id }}</td>
-                                <td>{{ plan.type }}</td>
+                                <td>{{ plan.vehicle_id }}</td>
+                                <td>{{ plan.name }}</td>
                                 <td>{{ plan.rate }}</td>
                                 <td>{{ plan.seats }}</td>
-                                <!-- <td><button class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td> -->
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
+                                <td><button @click="vehicle.edit(plan.vehicle_id, plan.name, plan.rate, plan.seats)" class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
+                                <td><Button class="btn btn-danger" @click="deleteOperation('Do you really want to delete?', plan.vehicle_id)"><i class="material-icons">delete</i>Delete</Button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -227,7 +315,7 @@ function fetchData() {
                                 <td>{{ account.name }}</td>
                                 <td>{{ account.email }}</td>
                                 <td>{{ account.phone }}</td>
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
+                                <td><Button class="btn btn-danger" @click="deleteOperation('Do you really want to delete?', account.account_id)"><i class="material-icons">delete</i>Delete</Button></td>
                             </tr>
 
                         </tbody>
@@ -262,7 +350,7 @@ function fetchData() {
                                 <td>{{ account.name }}</td>
                                 <td>{{ account.email }}</td>
                                 <td>{{ account.phone }}</td>
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
+                                <td><Button class="btn btn-danger" @click="deleteOperation('Do you really want to delete?', account.account_id)"><i class="material-icons">delete</i>Delete</Button></td>
 
                             </tr>
 
@@ -304,7 +392,7 @@ function fetchData() {
                                 <td>{{ book.drop_time }}</td>
                                 <td>{{ book.pick_loc }}</td>
                                 <td>{{ book.drop_loc }}</td>
-                                <td><Button class="btn btn-danger"><i class="material-icons">delete</i>Delete</Button></td>
+                                <td><Button class="btn btn-danger" @click="deleteOperation('Do you really want to delete?', book.book_id)"><i class="material-icons">delete</i>Delete</Button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -315,7 +403,9 @@ function fetchData() {
 
 
     <ProfileDialogVue :profile="profile" />
+    <VehicleDialogVue :vehicle="vehicle" />
     <MessageDialog :message="message" />
+    <WarningDialogVue :warning="warning" />
     <ProgressDialog v-if="!isProgressHidden" />
 </template>
 <style scoped>

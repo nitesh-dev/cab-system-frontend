@@ -17,6 +17,8 @@ export class ProfileData {
         this.isHidden = true
     }
 
+    onUpdateSuccessFul() { }
+
     hideProgress() {
 
     }
@@ -67,10 +69,10 @@ async function onSubmitForm() {
     prop.profile.hide()
     if (result.isSuccess == false) {
         prop.profile.showMessage(result.error)
-    }else{
+    } else {
         prop.profile.showMessage("Successfully updated")
+        prop.profile.onUpdateSuccessFul()
     }
-
 }
 
 function goUpdateMode() {

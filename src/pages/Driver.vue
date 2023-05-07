@@ -69,6 +69,25 @@ async function loadDriverTaskList(accountId: number) {
 }
 
 
+
+let detailAccountId = ref(0)
+let detailFullName = ref("")
+let detailEmail = ref("")
+let detailNumber = ref(0)
+
+async function loadAccountDetail() {
+    const res = await Api.getAccountDetail(accountId.value, accountType.value)
+    if (res.isSuccess) {
+        detailAccountId.value = res.data.account_id
+        detailFullName.value = res.data.name
+        detailEmail.value = res.data.email
+        detailNumber.value = res.data.number
+    }
+}
+
+
+
+
 const profileData = new (class extends ProfileData {
     show() {
         isProgressHidden.value = false
@@ -90,6 +109,12 @@ const profileData = new (class extends ProfileData {
     showMessage(text: string): void {
         message.value.show(text)
     }
+
+    onUpdateSuccessFul(): void {
+        detailFullName.value = this.name
+        detailEmail.value = this.email
+        detailNumber.value = this.number
+    }
 })
 
 let profile = ref(profileData)
@@ -108,6 +133,7 @@ function fetchData() {
     // fetch data
     console.log("fetching...")
     loadDriverTaskList(accountId.value)
+    loadAccountDetail()
 
 }
 
@@ -157,6 +183,51 @@ function unixMillisecondsToDateString(unixMilliseconds: number) {
             <button class="btn btn-danger" type="submit" @click="logout">Log out</button>
         </div>
     </nav>
+
+
+    <!-- account detail -->
+
+    <div class="card mb-4 card-parent">
+        <div class="card-body">
+            <h5>Driver Detail</h5>
+            <div class="row">
+                <div class="col-sm-3">
+                    <p class="mb-0">Account ID</p>
+                </div>
+                <div class="col-sm-9">
+                    <p class="text-muted mb-0">{{ detailAccountId }}</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-3">
+                    <p class="mb-0">Full Name</p>
+                </div>
+                <div class="col-sm-9">
+                    <p class="text-muted mb-0">{{ detailFullName }}</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-3">
+                    <p class="mb-0">Email</p>
+                </div>
+                <div class="col-sm-9">
+                    <p class="text-muted mb-0">{{ detailEmail }}</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-3">
+                    <p class="mb-0">Number</p>
+                </div>
+                <div class="col-sm-9">
+                    <p class="text-muted mb-0">{{ detailNumber }}</p>
+                </div>
+            </div>
+            
+        </div>
+    </div>
 
     <div class="cab-history">
         <h3>Driver Task History</h3>
@@ -226,6 +297,20 @@ function unixMillisecondsToDateString(unixMilliseconds: number) {
     <ProgressDialog v-if="!isProgressHidden" />
 </template>
 <style scoped>
+
+.card-parent{
+    margin: 24px;
+    max-width: 600px;
+    width: 100%;
+}
+
+.card-parent .row{
+    margin-bottom: 16px;
+}
+
+.card-body h5{
+    margin-bottom: 20px;
+}
 .cab-history {
     margin-top: 50px;
 
