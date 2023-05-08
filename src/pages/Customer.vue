@@ -258,11 +258,11 @@ async function groupBooking(resultType: string, bookingId: number, driverId: num
     isProgressHidden.value = true
     if (bookResult.isSuccess == true) {
 
-        if(resultType == 'search'){
-            searchedCabs.value = bookResult.data
-            message.value.show("Group searched")
+        if(bookResult.data.type == "booked"){
+            message.value.show("Cab booked successfully with booked id:" + bookResult.data.data)
         }else{
-            message.value.show("Cab booked successfully")
+            searchedCabs.value = bookResult.data.data
+            message.value.show("Found some Group cabs to join")
         }
         
     } else {
