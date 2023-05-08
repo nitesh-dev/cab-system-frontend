@@ -76,20 +76,16 @@ function showProfile() {
 let customerAllBooking = ref(new CustomerBooking())
 async function loadCustomerAllBooking(accountId: number) {
     isProgressHidden.value = false
-    let booking = await Api.getDriverAllTaskList(accountId)
+    let booking = await Api.getCustomerAllBooking(accountId)
     isProgressHidden.value = true
 
-    let currentDateTime = new Date().getTime()
     if (booking.isSuccess == true) {
 
+        customerAllBooking.value = new CustomerBooking()
         for (let index = 0; index < booking.data.length; index++) {
             let task = booking.data[index]
-            let startTime = task.pick_time
-            let endTime = task.drop_time
-
-            if (currentDateTime >= startTime && currentDateTime <= endTime) {
-                customerAllBooking.value.activeBook.push(task)
-            } else if (currentDateTime < startTime && currentDateTime < endTime) {
+            
+            if (task.is_done == 0) {
                 customerAllBooking.value.registeredBook.push(task)
             } else {
                 customerAllBooking.value.historyBook.push(task)
@@ -99,7 +95,6 @@ async function loadCustomerAllBooking(accountId: number) {
         message.value.show(booking.error)
     }
 }
-
 
 let vehicleDetails = ref(Array())
 async function loadVehicles() {
@@ -123,7 +118,6 @@ async function loadVehicles() {
 }
 
 
-
 function fetchData() {
     if (accountId.value == 0) return
     // fetch data
@@ -135,6 +129,13 @@ function fetchData() {
     } else if (activeTabIndex.value == 1) {
         // Todo do something
         loadVehicles()
+        pickDateTime.value = ""
+        pickLocation.value = ""
+        dropLocation.value = ""
+        vehicleName.value = ""
+        bookingType.value = "group"
+        totalDistance.value = 0
+        totalPrice.value = 0
     }
 }
 
@@ -142,6 +143,8 @@ let detailAccountId = ref(0)
 let detailFullName = ref("loading...")
 let detailEmail = ref("loading...")
 let detailNumber = ref(0)
+let detailGender = ref("loading...")
+let detailAge = ref(0)
 
 async function loadAccountDetail() {
     const res = await Api.getAccountDetail(accountId.value, accountType.value)
@@ -150,6 +153,8 @@ async function loadAccountDetail() {
         detailFullName.value = res.data.name
         detailEmail.value = res.data.email
         detailNumber.value = res.data.number
+        detailGender.value = res.data.gender
+        detailAge.value = res.data.age
     }
 }
 
@@ -198,7 +203,6 @@ function changeTab(index: number) {
 
 
 let pickDateTime = ref("")
-let dropDateTime = ref("")
 let pickLocation = ref("")
 let dropLocation = ref("")
 let vehicleName = ref("")
@@ -208,40 +212,68 @@ let totalDistance = ref(0)
 let totalPrice = ref(0)
 
 
-function calculateDistance(){
-    if(dropLocation.value != "" && pickLocation.value != ""){
+function calculateDistance() {
+    if (dropLocation.value != "" && pickLocation.value != "") {
         totalDistance.value = Math.round(Math.random() * 20 + 1)    // setting rand distance
         calculatePrice()
-    } 
+    }
 }
 
-
 function calculatePrice() {
-    
+
     for (let index = 0; index < vehicleDetails.value.length; index++) {
         const element = vehicleDetails.value[index];
 
         if (element.name == vehicleName.value) {
-            if(bookingType.value == "group"){
+            if (bookingType.value == "group") {
 
                 // give 30% discount on grouping
                 totalPrice.value = Math.round(element.rate * 0.7) * totalDistance.value
-            }else{
+            } else {
                 totalPrice.value = element.rate * totalDistance.value
             }
-            
+
             break
         }
     }
 }
 
 
-async function trySearchAndRegister() {
+function startBooking() {
+    if (bookingType.value == "group") {
+        groupBooking('search', 0, 0)
+
+    } else if (bookingType.value == "single") {
+        singleBooking()
+    }
+}
+
+
+let searchedCabs = ref(Array())
+async function groupBooking(resultType: string, bookingId: number, driverId: number) {
+    searchedCabs.value = Array()
     isProgressHidden.value = false
-    let mode = "search-register"
     let pickTime = new Date(pickDateTime.value).getTime()
-    let dropTime = new Date(dropDateTime.value).getTime()
-    let bookResult = await Api.bookCab(mode, accountId.value, 0, pickTime, dropTime, pickLocation.value, dropLocation.value, vehicleName.value, totalPrice.value, "group")
+    let bookResult = await Api.bookCab(accountId.value, bookingId, driverId, pickTime, pickLocation.value, dropLocation.value, vehicleName.value, totalPrice.value, "group")
+    isProgressHidden.value = true
+    if (bookResult.isSuccess == true) {
+
+        if(resultType == 'search'){
+            searchedCabs.value = bookResult.data
+            message.value.show("Group searched")
+        }else{
+            message.value.show("Cab booked successfully")
+        }
+        
+    } else {
+        message.value.show(bookResult.error)
+    }
+}
+
+async function singleBooking() {
+    isProgressHidden.value = false
+    let pickTime = new Date(pickDateTime.value).getTime()
+    let bookResult = await Api.bookCab(accountId.value, 0, 0, pickTime, pickLocation.value, dropLocation.value, vehicleName.value, totalPrice.value, "single")
     isProgressHidden.value = true
     if (bookResult.isSuccess == true) {
         message.value.show("successful")
@@ -321,6 +353,24 @@ async function trySearchAndRegister() {
                         </div>
                     </div>
 
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <p class="mb-0">Gender</p>
+                        </div>
+                        <div class="col-sm-9">
+                            <p class="text-muted mb-0">{{ detailGender }}</p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <p class="mb-0">Age</p>
+                        </div>
+                        <div class="col-sm-9">
+                            <p class="text-muted mb-0">{{ detailAge }}</p>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -335,49 +385,42 @@ async function trySearchAndRegister() {
                                 <th scope="col">Booking ID</th>
                                 <th scope="col">Driver ID</th>
                                 <th scope="col">Pick Time</th>
-                                <th scope="col">Drop Time</th>
                                 <th scope="col">Pick Loc</th>
                                 <th scope="col">Drop Loc</th>
+                                <th scope="col">Booked Mode</th>
+                                <th scope="col">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
+                           
                             <tr class="blank_row">
-                                <th colspan="7">Active</th>
-                            </tr>
-                            <tr class="table-active" v-for="task, index in customerAllBooking.activeBook">
-                                <th scope="row">{{ index + 1 }}</th>
-                                <td>{{ task.book_id }}</td>
-                                <td>{{ task.driver_id }}</td>
-                                <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
-                                <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
-                                <td>{{ task.drop_loc }}</td>
-                                <td>{{ task.pick_loc }}</td>
-                            </tr>
-
-                            <tr class="blank_row">
-                                <th colspan="7">Registered Task</th>
+                                <th colspan="8">Registered Cab</th>
                             </tr>
                             <tr v-for="task, index in customerAllBooking.registeredBook">
                                 <th scope="row">{{ index + 1 }}</th>
                                 <td>{{ task.book_id }}</td>
                                 <td>{{ task.driver_id }}</td>
                                 <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
-                                <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
-                                <td>{{ task.drop_loc }}</td>
                                 <td>{{ task.pick_loc }}</td>
+                                <td>{{ task.drop_loc }}</td>
+                                <td v-if="task.is_single == 0">Group</td>
+                                <td v-else>Single</td>
+                                <td>₹ {{ task.amount }}</td>
                             </tr>
 
                             <tr class="blank_row">
-                                <th colspan="7">History</th>
+                                <th colspan="8">History</th>
                             </tr>
                             <tr v-for="task, index in customerAllBooking.historyBook">
                                 <th scope="row">{{ index + 1 }}</th>
                                 <td>{{ task.book_id }}</td>
                                 <td>{{ task.driver_id }}</td>
                                 <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
-                                <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
-                                <td>{{ task.drop_loc }}</td>
                                 <td>{{ task.pick_loc }}</td>
+                                <td>{{ task.drop_loc }}</td>
+                                <td v-if="task.is_single == 0">Group</td>
+                                <td v-else>Single</td>
+                                <td>₹ {{ task.amount }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -390,27 +433,27 @@ async function trySearchAndRegister() {
         <div class="tab-pane fade" :class="{ show: activeTabIndex == 1, active: activeTabIndex == 1 }">
             <div class="row">
                 <div class="col-sm-6 cus-left">
-                    <form @submit.prevent="trySearchAndRegister()">
+                    <form @submit.prevent="startBooking">
                         <div class="mb-3">
                             <label for="pickTime" class="form-label">Enter Pick Time</label>
                             <input type="datetime-local" v-model="pickDateTime" class="form-control" id="pickTime"
                                 placeholder="Pickup time" required>
                         </div>
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label for="dropTime" class="form-label">Enter Drop Time</label>
                             <input type="datetime-local" v-model="dropDateTime" class="form-control" id="dropTime"
                                 placeholder="Drop time" required>
-                        </div>
+                        </div> -->
 
                         <div class="mb-3" style="margin-top: 40px;">
                             <label for="startLocation" class="form-label">Enter Pickup Location</label>
-                            <input type="Text" @focusout="calculateDistance" v-model="pickLocation" class="form-control" id="pickLocation"
-                                placeholder="India, Bihar, Patna" required>
+                            <input type="Text" @focusout="calculateDistance" v-model="pickLocation" class="form-control"
+                                id="pickLocation" placeholder="India, Bihar, Patna" required>
                         </div>
                         <div class="mb-3">
                             <label for="dropLocation" class="form-label">Enter Drop Location</label>
-                            <input type="Text" @focusout="calculateDistance" v-model="dropLocation" class="form-control" id="dropLocation"
-                                placeholder="India, Bihar, Hajipur" required>
+                            <input type="Text" @focusout="calculateDistance" v-model="dropLocation" class="form-control"
+                                id="dropLocation" placeholder="India, Bihar, Hajipur" required>
                         </div>
 
                         <label>Choose a vehicle:</label>
@@ -443,35 +486,33 @@ async function trySearchAndRegister() {
             </div>
 
             <!-- Search result -->
-            <div class="search-result">
-                <h3>Searching booking</h3>
+            <div class="search-result" v-if="searchedCabs.length != 0">
+                <h3>Join cab</h3>
                 <div class="table-responsive">
                     <table class="table table-hover table-striped">
                         <thead>
                             <tr>
                                 <th scope="col">#</th>
-                                <th scope="col">Vehicle ID</th>
+                                <th scope="col">Booking ID</th>
                                 <th scope="col">Driver ID</th>
-                                <th scope="col">Start time</th>
-                                <th scope="col">End time</th>
-                                <th scope="col">Vehicle name</th>
-                                <th scope="col">Seat left</th>
+                                <th scope="col">Vehicle ID</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Pick Time</th>
+                                <th scope="col">Seats</th>
                                 <th scope="col">Join</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- <tr v-for="plan, index in vehiclePlan">
-                        <th scope="row">{{ index }}</th>
-                        <td>{{ plan.vehicle_id }}</td>
-                        <td>{{ plan.name }}</td>
-                        <td>{{ plan.rate }}</td>
-                        <td>{{ plan.seats }}</td>
-                        <td><button @click="vehicle.edit(plan.vehicle_id, plan.name, plan.rate, plan.seats)"
-                                class="btn btn-primary"><i class="material-icons">edit</i>Edit</button></td>
-                        <td><Button class="btn btn-danger"
-                                @click="deleteOperation('Do you really want to delete?', plan.vehicle_id)"><i
-                                    class="material-icons">delete</i>Delete</Button></td>
-                    </tr> -->
+                            <tr v-for="data, index in searchedCabs">
+                                <th scope="row">{{ index }}</th>
+                                <td>{{ data.book_id }}</td>
+                                <td>{{ data.driver_id }}</td>
+                                <td>{{ data.vehicle_id }}</td>
+                                <td>{{ data.name }}</td>
+                                <td>{{ unixMillisecondsToDateString(data.pick_time) }}</td>
+                                <td>{{ data.seat_res }} / {{ data.seats }}</td>
+                                <td><button @click="groupBooking('register', data.book_id, data.driver_id)" class="btn btn-primary">Join</button></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>

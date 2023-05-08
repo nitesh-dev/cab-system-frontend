@@ -9,6 +9,8 @@ let number = ref<number>()
 let email = ref<string>("")
 let password = ref<string>("")
 let accountType = ref<string>("customer")
+let gender = ref("Male")
+let age = ref<number>()
 
 let message = ref(new Message())
 let isProgressHidden = ref(true)
@@ -20,9 +22,9 @@ function saveCookies(accountType: string, accountId: number) {
 }
 
 async function onSubmitForm() {
- 
+
   isProgressHidden.value = false
-  const res = await Api.signUp(name.value, (number.value as number).toString(), email.value, password.value, accountType.value)
+  const res = await Api.signUp(name.value, (number.value as number).toString(), email.value, password.value, gender.value, age.value as number, accountType.value)
   isProgressHidden.value = true
   if (res.isSuccess) {
     saveCookies(res.accountType, res.accountId)
@@ -46,11 +48,19 @@ async function onSubmitForm() {
       <input type="password" v-model="password" id="inputPassword" class="form-control" placeholder="Password"
         required="true">
 
+      <input type="number" v-model="age" class="form-control" placeholder="Age" required="true">
+
+      <select class="form-select" v-model="gender" aria-label="Default select example" style="margin-bottom: 20px;" required>
+        <option value="Male" selected>Male</option>
+        <option value="Female">Female</option>
+      </select>
+
       <div class="form-check form-check-inline">
         <input class="form-check-input" v-model="accountType" type="radio" name="accountType" checked="true" id="customer"
           value="customer">
         <label class="form-check-label" for="customer">Customer</label>
       </div>
+
       <div class="form-check form-check-inline">
         <input class="form-check-input" v-model="accountType" type="radio" name="accountType" id="driver" value="driver">
         <label class="form-check-label" for="driver">Driver</label>
@@ -85,11 +95,11 @@ p {
   margin-top: 30px;
 }
 
-input[type=checkbox] {
+input[type=checkbox], select {
   margin-top: 30px;
 }
 
-form>input {
+form>input, form>select {
   margin-top: 10px;
   padding: 12px;
 }

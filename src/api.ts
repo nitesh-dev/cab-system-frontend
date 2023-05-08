@@ -23,14 +23,16 @@ namespace Api {
         }
     }
 
-    export async function signUp(name: string, number: string, email: string, password: string, accountType: string) {
+    export async function signUp(name: string, number: string, email: string, password: string, gender: string, age: number, accountType: string) {
 
         let data = {
             name: name,
             number: number,
             email: email,
             password: password,
-            accountType: accountType
+            accountType: accountType,
+            gender: gender,
+            age: age
         }
         let path = `sign-up`
         try {
@@ -279,21 +281,40 @@ namespace Api {
         }
     }
 
-
-    // mode - search-register, register, join
-    export async function bookCab(mode: string, customerId: number, driverId: number, pickTime: number, dropTime: number, pickLoc: string, dropLoc: string, vehicleName: string, amount: number, bookMode: string) {
+    export async function completeDriverTask(bookingId: number, driverId: number) {
         let data = {
-            mode: mode,
+            bookingId: bookingId,
+            driverId: driverId
+        }
+        let path = `complete-driver-task`
+        try {
+            let res = await fetchData(path, data)
+            if (res.status == 200) {
+                let json = await res.json()
+                return { isSuccess: true, data: json }
+            } else {
+                let message = await res.json()
+                return { isSuccess: false, error: message.error }
+            }
+        } catch (error: any) {
+            return { isSuccess: false, error: error.message };
+        }
+    }
+
+
+    export async function bookCab(customerId: number, bookingId: number, driverId: number, pickTime: number, pickLoc: string, dropLoc: string, vehicleName: string, amount: number, bookMode: string) {
+        let data = {
             customerId: customerId,
+            bookingId: bookingId,
             driverId: driverId,
             pickTime: pickTime,
-            dropTime: dropTime,
             pickLoc: pickLoc,
             dropLoc: dropLoc,
             vehicleName: vehicleName,
             amount: amount,
             bookMode: bookMode
         }
+
         let path = `book-cab`
         try {
             let res = await fetchData(path, data)
@@ -313,7 +334,7 @@ namespace Api {
 
 
 
-    let timeout = 10000
+    let timeout = 20000
     async function fetchData(path: string, data = {}) {
 
         const requestOptions: RequestInit = {

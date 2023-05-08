@@ -88,6 +88,40 @@ let warning = ref(warningData)
 
 
 
+function unixMillisecondsToDateString(unixMilliseconds: number) {
+    // Create a new Date object with the Unix timestamp in milliseconds
+    const date = new Date(unixMilliseconds);
+
+    // Extract the day, month, and year from the date object
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'short' });
+    const year = date.getFullYear();
+
+    // Extract the hours and minutes from the date object
+    let hours = date.getHours();
+    let minutes: any = date.getMinutes();
+
+    // Convert the hours to 12-hour format and determine whether it's AM or PM
+    let amOrPm = 'AM';
+    if (hours >= 12) {
+        amOrPm = 'PM';
+        hours -= 12;
+    }
+    if (hours === 0) {
+        hours = 12;
+    }
+
+    // Add leading zeros to the minutes if needed
+    if (minutes < 10) {
+        minutes = '0' + minutes;
+    }
+
+    // Construct the date string in the desired format
+    const dateString = `${day} ${month} ${year}, ${hours}:${minutes} ${amOrPm}`;
+
+    return dateString;
+}
+
 
 
 
@@ -303,7 +337,10 @@ function deleteOperation(message: string, id: number){
                                 <th scope="col">Customer ID</th>
                                 <th scope="col">Name</th>
                                 <th scope="col">Email</th>
-                                <th scope="col">Phone</th>
+                                <th scope="col">Number</th>
+                                <th scope="col">Gender</th>
+                                <th scope="col">Age</th>
+                                <th scope="col">Premium</th>
                                 <th scope="col">Delete</th>
                             </tr>
                         </thead>
@@ -314,10 +351,13 @@ function deleteOperation(message: string, id: number){
                                 <td>{{ account.account_id }}</td>
                                 <td>{{ account.name }}</td>
                                 <td>{{ account.email }}</td>
-                                <td>{{ account.phone }}</td>
+                                <td>{{ account.number }}</td>
+                                <td>{{ account.gender }}</td>
+                                <td>{{ account.age }}</td>
+                                <td v-if="account.is_premium == 0">Paid</td>
+                                <td v-else>Free</td>
                                 <td><Button class="btn btn-danger" @click="deleteOperation('Do you really want to delete?', account.account_id)"><i class="material-icons">delete</i>Delete</Button></td>
                             </tr>
-
                         </tbody>
                     </table>
                 </div>
@@ -337,7 +377,10 @@ function deleteOperation(message: string, id: number){
                                 <th scope="col">Vehicle ID</th>
                                 <th scope="col">Name</th>
                                 <th scope="col">Email</th>
-                                <th scope="col">Phone</th>
+                                <th scope="col">Number</th>
+                                <th scope="col">Gender</th>
+                                <th scope="col">Age</th>
+                                <th scope="col">Status</th>
                                 <th scope="col">Delete</th>
                             </tr>
                         </thead>
@@ -349,7 +392,11 @@ function deleteOperation(message: string, id: number){
                                 <td>{{ account.vehicle_id }}</td>
                                 <td>{{ account.name }}</td>
                                 <td>{{ account.email }}</td>
-                                <td>{{ account.phone }}</td>
+                                <td>{{ account.number }}</td>
+                                <td>{{ account.gender }}</td>
+                                <td>{{ account.age }}</td>
+                                <td v-if="account.is_busy == 0">Free</td>
+                                <td v-else>Busy</td>
                                 <td><Button class="btn btn-danger" @click="deleteOperation('Do you really want to delete?', account.account_id)"><i class="material-icons">delete</i>Delete</Button></td>
 
                             </tr>
@@ -375,9 +422,11 @@ function deleteOperation(message: string, id: number){
                                 <th scope="col">Customer ID</th>
                                 <th scope="col">Driver ID</th>
                                 <th scope="col">Pick Time</th>
-                                <th scope="col">Drop Time</th>
                                 <th scope="col">Pick Loc</th>
                                 <th scope="col">Drop Loc</th>
+                                <th scope="col">Book Mode</th>
+                                <th scope="col">Amount</th>
+                                <th scope="col">Status</th>
                                 <th scope="col">Delete</th>
                             </tr>
                         </thead>
@@ -388,10 +437,14 @@ function deleteOperation(message: string, id: number){
                                 <td>{{ book.book_id }}</td>
                                 <td>{{ book.cus_id }}</td>
                                 <td>{{ book.driver_id }}</td>
-                                <td>{{ book.pick_time }}</td>
-                                <td>{{ book.drop_time }}</td>
+                                <td>{{ unixMillisecondsToDateString(book.pick_time) }}</td>
                                 <td>{{ book.pick_loc }}</td>
                                 <td>{{ book.drop_loc }}</td>
+                                <td v-if="book.is_single == 0">Group</td>
+                                <td v-else>Single</td>
+                                <td>₹ {{ book.amount }}</td>
+                                <td v-if="book.is_done == 0">Active</td>
+                                <td v-else>Done</td>
                                 <td><Button class="btn btn-danger" @click="deleteOperation('Do you really want to delete?', book.book_id)"><i class="material-icons">delete</i>Delete</Button></td>
                             </tr>
                         </tbody>

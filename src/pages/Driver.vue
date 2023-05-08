@@ -49,20 +49,33 @@ async function loadDriverTaskList(accountId: number) {
     let tasks = await Api.getDriverAllTaskList(accountId)
     isProgressHidden.value = true
 
-    let currentDateTime = new Date().getTime()
     if (tasks.isSuccess == true) {
+        driverAllTask.value = new DriverTask()
+
         for (let index = 0; index < tasks.data.length; index++) {
             let task = tasks.data[index]
-            let startTime = task.pick_time
-            let endTime = task.drop_time
-            if (currentDateTime >= startTime && currentDateTime <= endTime) {
-                driverAllTask.value.activeTask.push(task)
-            } else if (currentDateTime < startTime && currentDateTime < endTime) {
+           
+            if (task.is_done == 0) {
                 driverAllTask.value.registeredTask.push(task)
             } else {
                 driverAllTask.value.historyTask.push(task)
             }
         }
+
+    } else {
+        message.value.show(tasks.error)
+    }
+}
+
+
+async function completeTask(bookingId: number){
+    isProgressHidden.value = false
+    let tasks = await Api.completeDriverTask(bookingId, accountId.value)
+    isProgressHidden.value = true
+
+    if (tasks.isSuccess == true) {
+        loadDriverTaskList(accountId.value)
+
     } else {
         message.value.show(tasks.error)
     }
@@ -71,9 +84,11 @@ async function loadDriverTaskList(accountId: number) {
 
 
 let detailAccountId = ref(0)
-let detailFullName = ref("")
-let detailEmail = ref("")
+let detailFullName = ref("loading...")
+let detailEmail = ref("loading...")
 let detailNumber = ref(0)
+let detailGender = ref("loading...")
+let detailAge = ref(0)
 
 async function loadAccountDetail() {
     const res = await Api.getAccountDetail(accountId.value, accountType.value)
@@ -82,6 +97,8 @@ async function loadAccountDetail() {
         detailFullName.value = res.data.name
         detailEmail.value = res.data.email
         detailNumber.value = res.data.number
+        detailGender.value = res.data.gender
+        detailAge.value = res.data.age
     }
 }
 
@@ -225,7 +242,25 @@ function unixMillisecondsToDateString(unixMilliseconds: number) {
                     <p class="text-muted mb-0">{{ detailNumber }}</p>
                 </div>
             </div>
-            
+
+            <div class="row">
+                <div class="col-sm-3">
+                    <p class="mb-0">Gender</p>
+                </div>
+                <div class="col-sm-9">
+                    <p class="text-muted mb-0">{{ detailGender }}</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-3">
+                    <p class="mb-0">Age</p>
+                </div>
+                <div class="col-sm-9">
+                    <p class="text-muted mb-0">{{ detailAge }}</p>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -239,52 +274,48 @@ function unixMillisecondsToDateString(unixMilliseconds: number) {
                         <th scope="col">Booking ID</th>
                         <th scope="col">Customer ID</th>
                         <th scope="col">Pick Time</th>
-                        <th scope="col">Drop Time</th>
                         <th scope="col">Pick Loc</th>
                         <th scope="col">Drop Loc</th>
+                        <th scope="col">Booked Mode</th>
+                        <th scope="col">Amount</th>
+                        <th scope="col">Complete</th>
                     </tr>
                 </thead>
                 <tbody>
+
                     <tr class="blank_row">
-                        <th colspan="8">Active</th>
-                    </tr>
-                    <tr class="table-active" v-for="task, index in driverAllTask.activeTask">
-                        <th scope="row">{{ index }}</th>
-                        <td>{{ task.book_id }}</td>
-                        <td>{{ task.cus_id }}</td>
-                        <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
-                        <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
-                        <td>{{ task.drop_loc }}</td>
-                        <td>{{ task.pick_loc }}</td>
-                    </tr>
-                    <tr class="blank_row">
-                        <th colspan="8">Registered Task</th>
+                        <th colspan="9">Registered Task</th>
                     </tr>
                     <tr v-for="task, index in driverAllTask.registeredTask">
-                        <th scope="row">{{ index }}</th>
+                        <th scope="row">{{ index + 1 }}</th>
                         <td>{{ task.book_id }}</td>
                         <td>{{ task.cus_id }}</td>
                         <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
-                        <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
-                        <td>{{ task.drop_loc }}</td>
                         <td>{{ task.pick_loc }}</td>
+                        <td>{{ task.drop_loc }}</td>
+                        <td v-if="task.is_single == 0">Group</td>
+                        <td v-else>Group</td>
+                        <td>₹ {{ task.amount }}</td>
+                        <td><button @click="completeTask(task.book_id)" class="btn btn-primary">Complete</button></td>
                     </tr>
 
 
                     <tr class="blank_row">
-                        <th colspan="8">History</th>
+                        <th colspan="9">History</th>
                     </tr>
 
                     <tr v-for="task, index in driverAllTask.historyTask">
-                        <th scope="row">{{ index }}</th>
+                        <th scope="row">{{ index + 1 }}</th>
                         <td>{{ task.book_id }}</td>
-                        <td>{{ task.cus_id }}</td>
+                        <td>{{ task.driver_id }}</td>
                         <td>{{ unixMillisecondsToDateString(task.pick_time) }}</td>
-                        <td>{{ unixMillisecondsToDateString(task.drop_time) }}</td>
-                        <td>{{ task.drop_loc }}</td>
                         <td>{{ task.pick_loc }}</td>
+                        <td>{{ task.drop_loc }}</td>
+                        <td v-if="task.is_single == 0">Group</td>
+                        <td v-else>Group</td>
+                        <td>₹ {{ task.amount }}</td>
+                        <td><button class="btn">Completed</button></td>
                     </tr>
-
 
                 </tbody>
             </table>
@@ -297,20 +328,20 @@ function unixMillisecondsToDateString(unixMilliseconds: number) {
     <ProgressDialog v-if="!isProgressHidden" />
 </template>
 <style scoped>
-
-.card-parent{
+.card-parent {
     margin: 24px;
     max-width: 600px;
     width: 100%;
 }
 
-.card-parent .row{
+.card-parent .row {
     margin-bottom: 16px;
 }
 
-.card-body h5{
+.card-body h5 {
     margin-bottom: 20px;
 }
+
 .cab-history {
     margin-top: 50px;
 
