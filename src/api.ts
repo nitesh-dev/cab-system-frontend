@@ -1,6 +1,6 @@
-namespace Api {
-    const apiURL = 'http://localhost:8080'
 
+namespace Api {
+    const apiURL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000'
 
     export async function signIn(email: string, password: string) {
         let data = {
